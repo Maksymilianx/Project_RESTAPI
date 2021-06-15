@@ -16,6 +16,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+from movielist.views import MovieView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('movies/<int:pk>/', MovieView.as_view(), name='movies-detail')
 ]
