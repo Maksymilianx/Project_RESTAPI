@@ -49,3 +49,4 @@ def test_update_cinema(client, set_up):
     assert response.status_code == 200
     cinema_obj = Cinema.objects.get(id=cinema.id)
     assert cinema_obj.name == new_name
+
