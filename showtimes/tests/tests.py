@@ -53,19 +53,27 @@ def test_update_cinema(client, set_up):
 
 
 @pytest.mark.django_db
-# check if adding new screening works
+# checks if adding new screening works
 def test_add_screening(client, set_up):
     screening_count = Screening.objects.count()
-    new_screening_data = {
+    new_screening_date = {
         "cinema": Cinema.objects.first().name,
         "movie": Movie.objects.first().title,
         "date": faker.date_time(tzinfo=TZ).isoformat()
     }
-    response = client.post("/screenings/", new_screening_data, format='json')
+    response = client.post("/screenings/", new_screening_date, format='json')
     assert response.status_code == 201
     assert Screening.objects.count() == screening_count + 1
 
-    new_screening_data["date"] = new_screening_data["date"].replace('+00:00')
-    for key, value in new_screening_data.items():
+    new_screening_date["date"] = new_screening_date["date"].replace('+00:00', 'Z')
+    for key, value in new_screening_date.items():
         assert key in response.data
         assert response.data[key] == value
+
+
+@pytest.mark.django_db
+# checks if list of all screenings works
+def test_get_screening_list(client, set_up):
+    response = client.get("/screenings/", {}, format='json')
+    assert response.status_code == 200
+    assert Screening.objects.count() == len(response.data)
