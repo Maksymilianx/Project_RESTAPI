@@ -3,7 +3,8 @@ import pytz
 from faker import Faker
 
 from moviebase.settings import TIME_ZONE
-from showtimes.models import Cinema
+from movielist.models import Movie
+from showtimes.models import Cinema, Screening
 from showtimes.tests.utils import fake_cinema_data
 
 faker = Faker("pl_PL")
@@ -50,3 +51,21 @@ def test_update_cinema(client, set_up):
     cinema_obj = Cinema.objects.get(id=cinema.id)
     assert cinema_obj.name == new_name
 
+
+@pytest.mark.django_db
+# check if adding new screening works
+def test_add_screening(client, set_up):
+    screening_count = Screening.objects.count()
+    new_screening_data = {
+        "cinema": Cinema.objects.first().name,
+        "movie": Movie.objects.first().title,
+        "date": faker.date_time(tzinfo=TZ).isoformat()
+    }
+    response = client.post("/screenings/", new_screening_data, format='json')
+    assert response.status_code == 201
+    assert Screening.objects.count() == screening_count + 1
+
+    new_screening_data["date"] = new_screening_data["date"].replace('+00:00')
+    for key, value in new_screening_data.items():
+        assert key in response.data
+        assert response.data[key] == value
