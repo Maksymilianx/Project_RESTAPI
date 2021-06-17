@@ -56,17 +56,19 @@ def test_update_cinema(client, set_up):
 # checks if adding new screening works
 def test_add_screening(client, set_up):
     screening_count = Screening.objects.count()
-    new_screening_date = {
+    new_screening_data = {
         "cinema": Cinema.objects.first().name,
         "movie": Movie.objects.first().title,
         "date": faker.date_time(tzinfo=TZ).isoformat()
     }
-    response = client.post("/screenings/", new_screening_date, format='json')
+    response = client.post("/screenings/", new_screening_data, format='json')
     assert response.status_code == 201
     assert Screening.objects.count() == screening_count + 1
 
-    new_screening_date["date"] = new_screening_date["date"].replace('+00:00', 'Z')
-    for key, value in new_screening_date.items():
+    new_screening_data["date"] = new_screening_data["date"].replace('+00:00', 'Z')
+    # because data is stored in base in different way we have to use that kind of
+    # shortcut for proper test. We could compare datetime objects but this method is simplier.
+    for key, value in new_screening_data.items():
         assert key in response.data
         assert response.data[key] == value
 
@@ -99,3 +101,17 @@ def test_delete_screening(client, set_up):
     # but the client doesn't need to navigate away from its current page
     screenings_ids = [screening.id for screening in Screening.objects.all()]
     assert screening.id not in screenings_ids
+
+
+@pytest.mark.django_db
+# checks if screening update works
+def test_update_screening(client, set_up):
+    screening = Screening.objects.first()
+    response = client.get(f"/screenings/{screening.id}/", {}, format='json')
+    screening_data = response.data
+    new_cinema = Cinema.objects.last()
+    screening_data["cinema"] = new_cinema.name
+    response = client.patch(f"/screenings/{screening.id}/", screening_data, format='json')
+    assert response.status_code == 200
+    screening_obj = Screening.objects.get(id=screening.id)
+    assert screening_obj.cinema == new_cinema
