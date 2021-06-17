@@ -87,3 +87,15 @@ def test_get_screening_detail(client, set_up):
     assert response.status_code == 200
     for field in ('movie', 'cinema', 'date'):
         assert field in response.data
+
+
+@pytest.mark.django_db
+# checks if delete of screening works
+def test_delete_screening(client, set_up):
+    screening = Screening.objects.first()
+    response = client.delete(f"/screenings/{screening.id}/", {}, format='json')
+    assert response.status_code == 204
+    # No Content 204 - indicates that a request has succeeded,
+    # but the client doesn't need to navigate away from its current page
+    screenings_ids = [screening.id for screening in Screening.objects.all()]
+    assert screening.id not in screenings_ids
