@@ -77,3 +77,13 @@ def test_get_screening_list(client, set_up):
     response = client.get("/screenings/", {}, format='json')
     assert response.status_code == 200
     assert Screening.objects.count() == len(response.data)
+
+
+@pytest.mark.django_db
+# checks if specific screening view works
+def test_get_screening_detail(client, set_up):
+    screening = Screening.objects.first()
+    response = client.get(f"/screenings/{screening.id}/", {}, follow='json')
+    assert response.status_code == 200
+    for field in ('movie', 'cinema', 'date'):
+        assert field in response.data
